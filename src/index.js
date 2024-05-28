@@ -1,22 +1,25 @@
-// src/routes/index.js
+// src/index.js
 
-/**
- * Expose all of our API routes on /v1/* to include an API version.
- * Protect them all so you have to be authenticated in order to access.
- */
-router.use(`/v1`, authenticate(), require('./api'));
+// Read environment variables from an .env file (if present)
+// NOTE: we only need to do this once, here in our app's main entry point.
+require('dotenv').config();
 
-////////////////////////////////////////////////////////////////////
+// We want to log any crash cases so we can debug later from logs.
+const logger = require('./logger');
 
-// src/routes/api/get.js
+// If we're going to crash because of an uncaught exception, log it first.
+// https://nodejs.org/api/process.html#event-uncaughtexception
+process.on('uncaughtException', (err, origin) => {
+  logger.fatal({ err, origin }, 'uncaughtException');
+  throw err;
+});
 
-/**
- * Get a list of fragments for the current user
- */
-module.exports = (req, res) => {
-  // TODO: this is just a placeholder to get something working
-  res.status(200).json({
-    status: 'ok',
-    fragments: [],
-  });
-};
+// If we're going to crash because of an unhandled promise rejection, log it first.
+// https://nodejs.org/api/process.html#event-unhandledrejection
+process.on('unhandledRejection', (reason, promise) => {
+  logger.fatal({ reason, promise }, 'unhandledRejection');
+  throw reason;
+});
+
+// Start our server
+require('./server');
