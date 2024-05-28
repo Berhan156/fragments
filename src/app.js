@@ -63,14 +63,15 @@ app.use((err, req, res, next) => {
     logger.error({ err }, `Error processing request`);
   }
 
-  res.status(status).json({
+  res.status(404).json({
     status: 'error',
     error: {
-      message,
-      code: status,
+      message: 'not found',
+      code: 404,
     },
   });
 });
 
 // Export our `app` so we can access it in server.js
 module.exports = app;
+
