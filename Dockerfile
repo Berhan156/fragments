@@ -1,39 +1,36 @@
-# Use node version 18.13.0
-FROM node:18.13.0
+# Use a lighter base image and specify as build stage
+FROM node:18.13.0-alpine as builder
 
 LABEL maintainer="Berhan Berhan <bberhan1@myseneca.ca>"
-LABEL description="Fragments node.js microservice"
+LABEL description="Fragments node.js microservice build stage"
 
-# We default to use port 8080 in our service
-ENV PORT=8080
+# Set environment variables
+ENV PORT=8080 \
+    NPM_CONFIG_LOGLEVEL=warn \
+    NPM_CONFIG_COLOR=false
 
-# Reduce npm spam when installing within Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#loglevel
-ENV NPM_CONFIG_LOGLEVEL=warn
-
-# Disable colour when run inside Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#color
-ENV NPM_CONFIG_COLOR=false
-
-# Use /app as our working directory
+# Set working directory
 WORKDIR /app
 
-# Option 2: relative path - Copy the package.json and package-lock.json
-# files into the working dir (/app).  NOTE: this requires that we have
-# already set our WORKDIR in a previous step.
+# Installing dependencies
 COPY package*.json ./
-
-# Install node dependencies defined in package-lock.json
 RUN npm install
 
-# We run our service on port 8080
-EXPOSE 8080
-
-# Copy src/
+# Copy source code
 COPY ./src ./src
-
-# Copy our HTPASSWD file
 COPY ./tests/.htpasswd ./tests/.htpasswd
 
+# Final stage for a smaller production image
+FROM node:18.13.0-alpine
+
+# Copy from builder
+COPY --from=builder /app /app
+
+# Set working directory
+WORKDIR /app
+
+# Expose the service on port 8080
+EXPOSE 8080
+
 # Run the server
-CMD npm start
+CMD ["npm", "start"]
