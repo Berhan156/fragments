@@ -1,10 +1,5 @@
-// Use crypto.randomUUID() to create unique IDs, see:
-// https://nodejs.org/api/crypto.html#cryptorandomuuidoptions
 const { randomUUID } = require('crypto');
-// Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
-
-// Functions for working with fragment metadata/data using our DB
 const {
   readFragment,
   writeFragment,
@@ -51,11 +46,13 @@ class Fragment {
    * @returns Promise<Array<Fragment>>
    */
   static async byUser(ownerId, expand = false) {
+    const fragments = await listFragments(ownerId);
+
     if (expand) {
-      const fragments = await listFragments(ownerId);
-      return Promise.all(fragments.map((f) => Fragment.byId(ownerId, f)));
+      return Promise.all(fragments.map((id) => Fragment.byId(ownerId, id)));
     }
-    return listFragments(ownerId);
+
+    return fragments;
   }
 
   /**
@@ -70,7 +67,8 @@ class Fragment {
     if (!fragment) {
       throw new Error('There is no fragment with provided ownerId or id.');
     }
-    return fragment;
+
+    return new Fragment(fragment);
   }
 
   /**
@@ -126,10 +124,7 @@ class Fragment {
    * @returns {boolean} true if fragment's type is text/*
    */
   get isText() {
-    if (this.mimeType.startsWith('text/')) {
-      return true;
-    }
-    return false;
+    return this.mimeType.startsWith('text/');
   }
 
   /**
@@ -150,10 +145,7 @@ class Fragment {
    */
   static isSupportedType(value) {
     const { type } = contentType.parse(value);
-    if (type === 'text/plain') {
-      return true;
-    }
-    return false;
+    return type === 'text/plain';
   }
 }
 
