@@ -1,5 +1,3 @@
-// tests/unit/post.test.js
-
 const request = require('supertest');
 const app = require('../../src/app');
 
@@ -32,6 +30,21 @@ describe('POST /v1/fragments', () => {
     expect(response.body.status).toBe('ok');
     expect(response.body.id).toBeDefined();
     expect(response.body['Content-Type']).toBe('application/json');
+  });
+
+  test('Return a success response if a text/markdown fragment is created', async () => {
+    const response = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'text/markdown')
+      .send('# This is a Markdown fragment');
+
+    console.log(response.body);
+
+    expect(response.statusCode).toBe(201);
+    expect(response.body.status).toBe('ok');
+    expect(response.body.id).toBeDefined();
+    expect(response.body['Content-Type']).toBe('text/markdown');
   });
 
   test('Return 400 error if no body is provided', async () => {
