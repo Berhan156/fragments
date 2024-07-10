@@ -6,17 +6,10 @@ const wait = async (ms = 10) => new Promise((resolve) => setTimeout(resolve, ms)
 
 const validTypes = [
   `text/plain`,
-  /*
-   Currently, only text/plain is supported. Others will be added later.
-
   `text/markdown`,
   `text/html`,
   `application/json`,
-  `image/png`,
-  `image/jpeg`,
-  `image/webp`,
-  `image/gif`,
-  */
+  // Add other supported types as necessary
 ];
 
 describe('Fragment class', () => {
@@ -123,6 +116,10 @@ describe('Fragment class', () => {
       expect(Fragment.isSupportedType('text/plain; charset=utf-8')).toBe(true);
     });
 
+    test('application/json type is supported', () => {
+      expect(Fragment.isSupportedType('application/json')).toBe(true);
+    });
+
     test('other types are not supported', () => {
       expect(Fragment.isSupportedType('application/octet-stream')).toBe(false);
       expect(Fragment.isSupportedType('application/msword')).toBe(false);
@@ -166,7 +163,16 @@ describe('Fragment class', () => {
         type: 'text/plain; charset=utf-8',
         size: 0,
       });
-      expect(fragment.formats).toEqual(['text/plain']);
+      expect(fragment.formats).toEqual(['text/plain', 'text/markdown', 'text/html', 'text/csv']);
+    });
+
+    test('formats returns the expected result for application/json', () => {
+      const fragment = new Fragment({
+        ownerId: '1234',
+        type: 'application/json',
+        size: 0,
+      });
+      expect(fragment.formats).toEqual(['application/json', 'application/yaml', 'text/plain']);
     });
   });
 

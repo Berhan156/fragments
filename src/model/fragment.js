@@ -1,5 +1,8 @@
 const { randomUUID } = require('crypto');
 const contentType = require('content-type');
+const markdownIt = require('markdown-it')();
+
+// Functions for working with fragment metadata/data using our DB
 const {
   readFragment,
   writeFragment,
@@ -10,6 +13,7 @@ const {
 } = require('./data/memory');
 
 class Fragment {
+  // Constructor to initialize a fragment object
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
     this.id = id || randomUUID();
     this.ownerId = ownerId;
@@ -18,134 +22,113 @@ class Fragment {
     this.type = type;
     this.size = size;
 
+    // Validate required fields
     if (!ownerId) {
       throw new Error('No owner id provided');
     }
-
     if (!type) {
       throw new Error('No type provided');
     }
-
     if (typeof size !== 'number') {
       throw new Error('Size is not a number');
     }
-
     if (size < 0) {
       throw new Error('Size is less than 0');
     }
-
     if (!Fragment.isSupportedType(type)) {
       throw new Error('Type is not supported');
     }
   }
 
-  /**
-   * Get all fragments (id or full) for the given user
-   * @param {string} ownerId user's hashed email
-   * @param {boolean} expand whether to expand ids to full fragments
-   * @returns Promise<Array<Fragment>>
-   */
+  // Static method to get all fragments for a user
   static async byUser(ownerId, expand = false) {
-    const fragments = await listFragments(ownerId);
-
     if (expand) {
-      return Promise.all(fragments.map((id) => Fragment.byId(ownerId, id)));
+      const fragments = await listFragments(ownerId); // Get list of fragments
+      return Promise.all(fragments.map((f) => Fragment.byId(ownerId, f))); // Return full fragment objects if expand is true
     }
-
-    return fragments;
+    return listFragments(ownerId); // Return fragment IDs
   }
 
-  /**
-   * Gets a fragment for the user by the given id.
-   * @param {string} ownerId user's hashed email
-   * @param {string} id fragment's id
-   * @returns Promise<Fragment>
-   */
+  // Static method to get a fragment by ID
   static async byId(ownerId, id) {
-    const fragment = await readFragment(ownerId, id);
-
-    if (!fragment) {
-      throw new Error('There is no fragment with provided ownerId or id.');
+    try {
+      const fragment = await readFragment(ownerId, id); // Read fragment metadata
+      if (!fragment) {
+        throw new Error('Fragment not found');
+      }
+      return fragment;
+    } catch (err) {
+      console.error(`Error in byId: ${err.message}`);
+      throw new Error('Fragment not found');
     }
-
-    return new Fragment(fragment);
   }
 
-  /**
-   * Delete the user's fragment data and metadata for the given id
-   * @param {string} ownerId user's hashed email
-   * @param {string} id fragment's id
-   * @returns Promise
-   */
+  // Static method to delete a fragment
   static delete(ownerId, id) {
-    return deleteFragment(ownerId, id);
+    return deleteFragment(ownerId, id); // Delete fragment from DB
   }
 
-  /**
-   * Saves the current fragment to the database
-   * @returns Promise
-   */
+  // Method to save a fragment
   save() {
     this.updated = new Date().toISOString();
     return writeFragment(this);
   }
 
-  /**
-   * Gets the fragment's data from the database
-   * @returns Promise<Buffer>
-   */
+  // Method to get fragment data
   getData() {
     return readFragmentData(this.ownerId, this.id);
   }
 
-  /**
-   * Set's the fragment's data in the database
-   * @param {Buffer} data
-   * @returns Promise
-   */
+  // Method to set fragment data
   async setData(data) {
-    this.size = data.length;
-    this.updated = new Date().toISOString();
+    this.size = data.length; // Update size
+    this.updated = new Date().toISOString(); // Update the last modified date
     await writeFragmentData(this.ownerId, this.id, data);
   }
 
-  /**
-   * Returns the mime type (e.g., without encoding) for the fragment's type:
-   * "text/html; charset=utf-8" -> "text/html"
-   * @returns {string} fragment's mime type (without encoding)
-   */
+  // Getter for MIME type without encoding
   get mimeType() {
-    const { type } = contentType.parse(this.type);
-    return type;
+    const { type } = contentType.parse(this.type); // Parse MIME type
+    return type; // Return MIME type
   }
 
-  /**
-   * Returns true if this fragment is a text/* mime type
-   * @returns {boolean} true if fragment's type is text/*
-   */
+  // Check if the fragment is a text type
   get isText() {
-    return this.mimeType.startsWith('text/');
+    return this.mimeType.startsWith('text/'); // Return true if MIME type starts with 'text/'
   }
 
-  /**
-   * Returns the formats into which this fragment type can be converted
-   * @returns {Array<string>} list of supported mime types
-   */
+  // Supported formats for conversion
   get formats() {
     if (this.isText) {
-      return ['text/plain'];
+      return ['text/plain', 'text/markdown', 'text/html', 'text/csv'];
     }
-    return [];
+    if (this.mimeType === 'application/json') {
+      return ['application/json', 'application/yaml', 'text/plain'];
+    }
+    return []; // No other formats supported
   }
 
-  /**
-   * Returns true if we know how to work with this content type
-   * @param {string} value a Content-Type value (e.g., 'text/plain' or 'text/plain: charset=utf-8')
-   * @returns {boolean} true if we support this Content-Type (i.e., type/subtype)
-   */
+  // Static method to check if a type is supported
   static isSupportedType(value) {
-    const { type } = contentType.parse(value);
-    return type === 'text/plain';
+    const { type } = contentType.parse(value); // Parse MIME type
+    const supportedTypes = [
+      'text/plain',
+      'text/markdown',
+      'text/html',
+      'text/csv',
+      'application/json',
+      'application/yaml',
+    ]; // List of supported types
+    return supportedTypes.includes(type); // Check if type is in the list
+  }
+
+  // Method to convert fragment data to another type
+  convertTo(type, data) {
+    if (type === 'text/html' && this.mimeType === 'text/markdown') {
+      const convertedData = markdownIt.render(data.toString()); // Convert Markdown to HTML
+      return Buffer.from(convertedData); // Return converted data as a buffer
+    }
+    throw new Error(`Conversion from ${this.mimeType} to ${type} is not supported`); // Error if conversion not supported
   }
 }
 

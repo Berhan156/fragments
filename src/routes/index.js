@@ -1,5 +1,3 @@
-// src/routes/index.js
-
 const express = require('express');
 
 // version and author from package.json
@@ -21,6 +19,11 @@ const { createSuccessResponse } = require('../response');
 router.use(`/v1`, authenticate(), require('./api'));
 
 /**
+ * Expose all of our API routes on /v1/* to include an API version.
+ */
+router.use(`/v1`, require('./api'));
+
+/**
  * Define a simple health check route. If the server is running
  * we'll respond with a 200 OK.  If not, the server isn't healthy.
  */
@@ -32,7 +35,7 @@ router.get('/', (req, res) => {
     status: 'ok',
     author,
     // Use your own GitHub URL for this!
-    githubUrl: 'https://github.com/156/fragments',
+    githubUrl: 'https://github.com/Berhan156/fragments',
     version,
   };
 

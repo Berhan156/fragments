@@ -4,7 +4,7 @@ const request = require('supertest');
 const app = require('../../src/app');
 
 describe('POST /v1/fragments', () => {
-  test('Return a success response if a fragment is created', async () => {
+  test('Return a success response if a text/plain fragment is created', async () => {
     const response = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
@@ -19,19 +19,19 @@ describe('POST /v1/fragments', () => {
     expect(response.body['Content-Type']).toBe('text/plain');
   });
 
-  test('Return success if ID is used to create fragment', async () => {
+  test('Return a success response if an application/json fragment is created', async () => {
     const response = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'text/plain')
-      .send('This is a fragment');
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ key: 'value' }));
 
     console.log(response.body);
 
     expect(response.statusCode).toBe(201);
     expect(response.body.status).toBe('ok');
     expect(response.body.id).toBeDefined();
-    expect(response.body['Content-Type']).toBe('text/plain');
+    expect(response.body['Content-Type']).toBe('application/json');
   });
 
   test('Return 400 error if no body is provided', async () => {

@@ -3,11 +3,10 @@ const { createErrorResponse } = require('../../response');
 const logger = require('../../logger');
 
 module.exports = async (req, res) => {
-  const id = req.params.id.split('.')[0];
-  const ext = req.params.id.split('.')[1];
+  const id = req.params.id;
 
   try {
-    logger.debug(`Retrieving fragment with id: ${id}, extension: ${ext}`);
+    logger.debug(`Retrieving fragment info with id: ${id}`);
 
     const fragment = await Fragment.byId(req.user, id);
 
@@ -16,18 +15,19 @@ module.exports = async (req, res) => {
       return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
     }
 
-    const data = await fragment.getData();
-
-    if (ext && ext === 'html' && fragment.mimeType === 'text/markdown') {
-      const convertedData = fragment.convertTo('text/html', data);
-      res.setHeader('Content-Type', 'text/html');
-      return res.status(200).send(convertedData);
-    }
-
-    res.setHeader('Content-Type', fragment.type);
-    return res.status(200).send(data);
+    return res.status(200).json({
+      status: 'ok',
+      fragment: {
+        id: fragment.id,
+        ownerId: fragment.ownerId,
+        created: fragment.created,
+        updated: fragment.updated,
+        type: fragment.type,
+        size: fragment.size,
+      },
+    });
   } catch (err) {
-    logger.error(`Error in getById: ${err.message}`);
+    logger.error(`Error in getInfo: ${err.message}`);
     if (err.message === 'Fragment not found') {
       return res.status(404).json(createErrorResponse(404, 'Fragment not found'));
     }
