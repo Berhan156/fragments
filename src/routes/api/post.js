@@ -1,5 +1,3 @@
-// src/routes/api/post.js
-
 const contentType = require('content-type');
 const { Fragment } = require('../../model/fragment.js');
 const { createSuccessResponse, createErrorResponse } = require('../../response');
@@ -34,12 +32,25 @@ module.exports = async (req, res) => {
 
     logger.info({ fragment }, 'Fragment created');
 
+    const location = `${API_URL}/v1/fragments/${fragment.id}`;
+
+    // Set the Location header explicitly
+    res.setHeader('Location', location);
+
     return res.status(201).json(
       createSuccessResponse({
-        Location: `${API_URL}/v1/fragments/${fragment.id}`,
+        Location: location,
         id: fragment.id,
         'Content-Type': type,
         'Content-Length': req.body.length,
+        fragment: {
+          id: fragment.id,
+          ownerId: fragment.ownerId,
+          created: fragment.created,
+          updated: fragment.updated,
+          type: fragment.type,
+          size: fragment.size,
+        },
       })
     );
   } catch (err) {
