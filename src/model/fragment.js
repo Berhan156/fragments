@@ -10,7 +10,7 @@ const {
   writeFragmentData,
   listFragments,
   deleteFragment,
-} = require('./data/memory');
+} = require('./data');
 
 class Fragment {
   // Constructor to initialize a fragment object
