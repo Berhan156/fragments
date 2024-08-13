@@ -42,7 +42,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Lint Dockerfile with Hadolint
+      - name: Lint Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
@@ -65,8 +65,10 @@ jobs:
 
   docker-hub:
     name: Build and Push to Docker Hub
+    # Don't bother running this job unless the other three all pass
     needs: [lint, dockerfile-lint, unit-tests]
     runs-on: ubuntu-latest
+
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -102,14 +104,15 @@ jobs:
       - name: Install node dependencies
         run: npm install
 
+      - name: Install Hurl
+        run: |
+          curl -fsSL https://hurl.dev/install.sh | sh
+
       - name: Build Containers
         run: docker compose up -d
 
       - name: Setup Local AWS Resources
- 
-        run: |
-          chmod +x ./scripts/local-aws-setup.sh
-          ./scripts/local-aws-setup.sh
-          
+        run: ./scripts/local-aws-setup.sh
+
       - name: Run Hurl Tests
         run: npm run test:integration
