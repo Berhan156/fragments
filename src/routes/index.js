@@ -1,3 +1,4 @@
+const { hostname } = require('os');
 const express = require('express');
 
 // version and author from package.json
@@ -37,6 +38,8 @@ router.get('/', (req, res) => {
     // Use your own GitHub URL for this!
     githubUrl: 'https://github.com/Berhan156/fragments',
     version,
+    hostname: hostname(),
+
   };
 
   res.status(200).json(createSuccessResponse(data));
