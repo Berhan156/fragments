@@ -1,10 +1,10 @@
-// Use https://www.npmjs.com/package/nanoid to create unique IDs
+// Use crypto.randomUUID() to create unique IDs, see:
+// https://nodejs.org/api/crypto.html#cryptorandomuuidoptions
 const { randomUUID } = require('crypto');
 // Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
-const sharp = require('sharp');
-
 var md = require('markdown-it')();
+const sharp = require('sharp');
 // Functions for working with fragment metadata/data using our DB
 const {
   readFragment,
@@ -15,7 +15,7 @@ const {
   deleteFragment,
 } = require('./data');
 
-const validTypes = {
+const validFileTypes = {
   txt: 'text/plain',
   txtCharset: 'text/plain; charset=utf-8',
   md: 'text/markdown',
@@ -29,24 +29,32 @@ const validTypes = {
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
-    if (!ownerId || !type) {
-      throw Error('ownerId or type is missing!');
-    }
-
-    if (!Fragment.isSupportedType(type)) {
-      throw Error('type is not supported!');
-    }
-
-    if (!Number.isInteger(size) || size < 0) {
-      throw Error('size does not have a valid value!');
-    }
-
     this.id = id || randomUUID();
     this.ownerId = ownerId;
     this.created = created || new Date().toISOString();
     this.updated = updated || new Date().toISOString();
     this.type = type;
     this.size = size;
+
+    if (!ownerId) {
+      throw new Error('No owner id provided');
+    }
+
+    if (!type) {
+      throw new Error('No type provided');
+    }
+
+    if (typeof size !== 'number') {
+      throw new Error('Size is not a number');
+    }
+
+    if (size < 0) {
+      throw new Error('Size is less than 0');
+    }
+
+    if (!Fragment.isSupportedType(type)) {
+      throw new Error('Type is not supported');
+    }
   }
 
   /**
@@ -56,11 +64,8 @@ class Fragment {
    * @returns Promise<Array<Fragment>>
    */
   static async byUser(ownerId, expand = false) {
-    try {
-      return await listFragments(ownerId, expand);
-    } catch (error) {
-      throw new Error('Can not get fragments for the current user.');
-    }
+    const fragments = await listFragments(ownerId, expand);
+    return fragments;
   }
 
   /**
@@ -71,9 +76,8 @@ class Fragment {
    */
   static async byId(ownerId, id) {
     const fragment = await readFragment(ownerId, id);
-
     if (!fragment) {
-      throw new Error('There is no fragment with provided ownerId or id.');
+      throw new Error('Fragment is null or undefined');
     }
     return fragment;
   }
@@ -111,13 +115,10 @@ class Fragment {
    * @returns Promise
    */
   async setData(data) {
-    try {
-      this.size = Buffer.byteLength(data);
-      this.updated = new Date().toISOString();
-      return await writeFragmentData(this.ownerId, this.id, data);
-    } catch (error) {
-      throw new Error(`setting fragment data failed, ${error}`);
-    }
+    this.size = Buffer.byteLength(data);
+    this.data = data;
+    this.updated = new Date().toISOString();
+    return await writeFragmentData(this.ownerId, this.id, data);
   }
 
   /**
@@ -144,26 +145,31 @@ class Fragment {
    */
   get formats() {
     let mimeTypes = [];
-
     switch (this.type) {
-      case validTypes.txt:
-      case validTypes.txtCharset:
-        mimeTypes = [validTypes.txt];
+      case validFileTypes.txt:
+      case validFileTypes.txtCharset:
+        mimeTypes = [validFileTypes.txt];
         break;
-      case validTypes.md:
-        mimeTypes = [validTypes.md, validTypes.txt, validTypes.html];
+      case validFileTypes.md:
+        mimeTypes = [validFileTypes.md, validFileTypes.txt, validFileTypes.html];
         break;
-      case validTypes.html:
-        mimeTypes = [validTypes.html, validTypes.txt];
+      case validFileTypes.html:
+        mimeTypes = [validFileTypes.html, validFileTypes.txt];
         break;
-      case validTypes.json:
-        mimeTypes = [validTypes.json, validTypes.txt];
+      case validFileTypes.json:
+        mimeTypes = [validFileTypes.json, validFileTypes.txt];
         break;
-      case validTypes.png:
-      case validTypes.jpg:
-      case validTypes.webp:
-      case validTypes.gif:
-        mimeTypes = [validTypes.png, validTypes.jpg, validTypes.webp, validTypes.gif];
+      case validFileTypes.png:
+        mimeTypes = [validFileTypes.png, validFileTypes.jpg, validFileTypes.webp, validFileTypes.gif];
+        break;
+      case validFileTypes.jpg:
+        mimeTypes = [validFileTypes.png, validFileTypes.jpg, validFileTypes.webp, validFileTypes.gif];
+        break;
+      case validFileTypes.gif:
+        mimeTypes = [validFileTypes.png, validFileTypes.jpg, validFileTypes.webp, validFileTypes.gif];
+        break;
+      case validFileTypes.webp:
+        mimeTypes = [validFileTypes.png, validFileTypes.jpg, validFileTypes.webp, validFileTypes.gif];
         break;
       default:
         mimeTypes = [];
@@ -177,43 +183,34 @@ class Fragment {
    * @returns {boolean} true if we support this Content-Type (i.e., type/subtype)
    */
   static isSupportedType(value) {
-    return Object.values(validTypes).includes(value);
+    return Object.values(validFileTypes).includes(value);
   }
 
-  /**
-   * returns true if the extension is supported
-   *  */
-  static isSupportedExt(value) {
-    return Object.keys(validTypes).includes(value);
+  static isUseableExtension(value) {
+    return Object.keys(validFileTypes).includes(value);
   }
 
-  /**
-   * return the type by using its extension
-   *  */
-  static extValidType(ext) {
-    return validTypes[ext];
+  static isValidExtType(ext) {
+    return validFileTypes[ext];
   }
 
-  /**
-   * return the converted fragment data after checking type of conversion
-   *  */
-  async convertData(fragmentData, conversionType) {
+  async convertFragment(fragData, conversionType) {
     switch (conversionType) {
       case 'text/plain':
-        return fragmentData.toString();
+        return fragData.toString();
       case 'text/html':
-        if (this.type === 'text/markdown') return md.render(fragmentData.toString());
-        return fragmentData;
+        if (this.type === 'text/markdown') return md.render(fragData.toString());
+        return fragData;
       case 'image/png':
-        return await sharp(fragmentData).png();
+        return await sharp(fragData).png();
       case 'image/jpeg':
-        return await sharp(fragmentData).jpeg();
+        return await sharp(fragData).jpeg();
       case 'image/gif':
-        return await sharp(fragmentData).gif();
+        return await sharp(fragData).gif();
       case 'image/webp':
-        return await sharp(fragmentData).webp();
+        return await sharp(fragData).webp();
       default:
-        return fragmentData;
+        return fragData;
     }
   }
 }

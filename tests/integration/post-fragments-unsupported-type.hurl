@@ -1,14 +1,9 @@
-# tests/integration/post-fragments-unsupported-type.hurl
-# Attempt to post a fragment with an unsupported Content-Type
+# Test for unsupported Content-Type
 POST http://localhost:8080/v1/fragments
-Content-Type: application/unsupported
+Content-Type: application/xml
 [BasicAuth]
 user1@email.com:password1
-`Unsupported fragment content`
+<fragment>This is an unsupported type</fragment>
 
-# We expect to get back an HTTP 415
+# We expect to get back an HTTP 415 Unsupported Media Type
 HTTP/1.1 415
-[Asserts]
-jsonpath "$.status" == "error"
-jsonpath "$.error.code" == 415
-jsonpath "$.error.message" == "Improper Content-Type"

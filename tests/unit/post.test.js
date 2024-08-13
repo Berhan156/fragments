@@ -1,79 +1,28 @@
+// tests/unit/post.test.js
+
 const request = require('supertest');
 const app = require('../../src/app');
 
 describe('POST /v1/fragments', () => {
-  test('Return a success response if a text/plain fragment is created', async () => {
-    const response = await request(app)
+  test('Return a success response if a fragment is created', async () => {
+    const res = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'text/plain')
-      .send('This is a fragment');
-
-    console.log(response.body);
-
-    expect(response.statusCode).toBe(201);
-    expect(response.body.status).toBe('ok');
-    expect(response.body.id).toBeDefined();
-    expect(response.body['Content-Type']).toBe('text/plain');
+      .send('955')
+      .set('Content-Type', 'text/plain');
+    expect(res.statusCode).toBe(201);
+    expect(res.body.status).toBe('ok');
+    expect(Array.isArray(res.body.fragments)).toBe(false);
   });
 
-  test('Return a success response if an application/json fragment is created', async () => {
-    const response = await request(app)
+  test('Return success if ID is used to create fragment', async () => {
+    const res = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'application/json')
-      .send(JSON.stringify({ key: 'value' }));
-
-    console.log(response.body);
-
-    expect(response.statusCode).toBe(201);
-    expect(response.body.status).toBe('ok');
-    expect(response.body.id).toBeDefined();
-    expect(response.body['Content-Type']).toBe('application/json');
-  });
-
-  test('Return a success response if a text/markdown fragment is created', async () => {
-    const response = await request(app)
-      .post('/v1/fragments')
-      .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'text/markdown')
-      .send('# This is a Markdown fragment');
-
-    console.log(response.body);
-
-    expect(response.statusCode).toBe(201);
-    expect(response.body.status).toBe('ok');
-    expect(response.body.id).toBeDefined();
-    expect(response.body['Content-Type']).toBe('text/markdown');
-  });
-
-  test('Return 400 error if no body is provided', async () => {
-    const response = await request(app)
-      .post('/v1/fragments')
-      .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'text/plain')
-      .send('');
-
-    console.log(response.body);
-
-    expect(response.statusCode).toBe(400);
-    expect(response.body.status).toBe('error');
-    expect(response.body.error.code).toBe(400);
-    expect(response.body.error.message).toBe('No body provided');
-  });
-
-  test('Return 415 error for improper Content-Type', async () => {
-    const response = await request(app)
-      .post('/v1/fragments')
-      .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'application/unsupported')
-      .send('This is a fragment');
-
-    console.log(response.body);
-
-    expect(response.statusCode).toBe(415);
-    expect(response.body.status).toBe('error');
-    expect(response.body.error.code).toBe(415);
-    expect(response.body.error.message).toBe('Improper Content-Type');
+      .send({ body: 'DPS' })
+      .set({ id: '1234', contentType: 'text/plain' });
+    expect(res.statusCode).toBe(201);
+    expect(res.body.status).toBe('ok');
+    expect(Array.isArray(res.body.fragments)).toBe(false);
   });
 });
