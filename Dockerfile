@@ -1,36 +1,39 @@
-# Use a lighter base image and specify as build stage
-FROM node:18.13.0-alpine as builder
+# Stage 1: Build the application
+FROM node:18.17.0 AS build
 
 LABEL maintainer="Berhan Berhan <bberhan1@myseneca.ca>"
 LABEL description="Fragments node.js microservice build stage"
 
-# Set environment variables
-ENV PORT=8080 \
-    NPM_CONFIG_LOGLEVEL=warn \
-    NPM_CONFIG_COLOR=false
-
 # Set working directory
 WORKDIR /app
 
-# Installing dependencies
+# Install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
+# Copy source code and tests
 COPY ./src ./src
 COPY ./tests/.htpasswd ./tests/.htpasswd
 
-# Final stage for a smaller production image
-FROM node:18.13.0-alpine
+# Stage 2: Create the runtime image
+FROM node:18.17.0
 
-# Copy from builder
-COPY --from=builder /app /app
+LABEL maintainer="Berhan Berhan <bberhan1@myseneca.ca>"
+LABEL description="Fragments node.js microservice build stage"
 
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
-# Expose the service on port 8080
+# Copy only the necessary files from the build stage
+COPY --from=build /app /app
+
+# Expose the port the app runs on
 EXPOSE 8080
 
-# Run the server
-CMD ["npm", "start"]
+# Default environment variables
+ENV PORT=8080
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_COLOR=false
+
+# Start the application
+CMD ["node", "src/index.js"]
