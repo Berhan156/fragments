@@ -106,7 +106,10 @@ jobs:
         run: docker compose up -d
 
       - name: Setup Local AWS Resources
-        run: ./scripts/local-aws-setup.sh
-
+ 
+        run: |
+          chmod +x ./scripts/local-aws-setup.sh
+          ./scripts/local-aws-setup.sh
+          
       - name: Run Hurl Tests
         run: npm run test:integration
