@@ -1,15 +1,9 @@
-// src/app.js
-
 const express = require('express');
 const passport = require('passport');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const authenticate = require('./auth');
-
-// author and version from our package.json file
-// TODO: make sure you have updated your name in the `author` section
-require('../package.json');
 
 const { createErrorResponse } = require('./response');
 

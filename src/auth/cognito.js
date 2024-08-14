@@ -58,4 +58,4 @@ module.exports.strategy = () =>
     }
   });
 
-module.exports.authenticate = () => authorize('bearer')
+module.exports.authenticate = () => authorize('bearer');
