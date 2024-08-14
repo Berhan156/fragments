@@ -25,15 +25,12 @@ module.exports = (strategyName) => {
 
       // Not authorized, return a 401
       if (!email) {
-        logger.warn('No email provided');
         return res.status(401).json(createErrorResponse(401, 'Unauthorized'));
       }
 
       // Authorized. Hash the user's email, attach to the request, and continue
       req.user = hash(email);
       logger.debug({ email, hash: req.user }, 'Authenticated user');
-
-      // Call the next function in the middleware chain (e.g. your route handler)
       next();
     }
 

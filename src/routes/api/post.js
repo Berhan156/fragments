@@ -1,7 +1,8 @@
+// src/routes/api/post.js
+const API_URL = process.env.API_URL || 'http://localhost:8080';
 const { createSuccessResponse, createErrorResponse } = require('../../response');
 const Fragment = require('../../model/fragment');
 const logger = require('../../logger');
-const API_URL = process.env.API_URL || 'http://localhost:8080';
 
 module.exports = async (req, res) => {
   try {
