@@ -8,7 +8,7 @@ const { version, author } = require('../../package.json');
 const { hostname } = require('os');
 
 // Our authorization middleware
-const { authenticate } = require('../auth/auth-middleware');
+const { authenticate } = require('../auth');
 
 const { createSuccessResponse } = require('../response');
 
