@@ -1,13 +1,8 @@
-// tests/unit/put.test.js
-
 const request = require('supertest');
 const app = require('../../src/app');
 
 describe('POST /v1/fragments', () => {
-  // If the request is missing the Authorization header, it should be forbidden
   test('unauthenticated requests are denied', () => request(app).post('/v1/fragments').expect(401));
-
-  // If the wrong username/password pair are used (no such user), it should be forbidden
   test('incorrect credentials are denied', () =>
     request(app).post('/v1/fragments').auth('invalid@email.com', 'incorrect_password').expect(401));
 
@@ -15,18 +10,16 @@ describe('POST /v1/fragments', () => {
     const postResponse = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set({
-        'Content-Type': 'text/plain',
-        body: 'This is a fragment',
-      });
+      .set('Content-Type', 'text/plain')
+      .send('This is a fragment');
+
+    expect(postResponse.statusCode).toBe(201);
 
     const putResponse = await request(app)
       .put(`/v1/fragments/${postResponse.body.fragment.id}`)
       .auth('user1@email.com', 'password1')
-      .set({
-        'Content-Type': 'application/json',
-        body: { data: 'fragment' },
-      });
+      .set('Content-Type', 'application/json')
+      .send({ data: 'fragment' });
 
     expect(putResponse.statusCode).toBe(400);
   });
@@ -35,10 +28,8 @@ describe('POST /v1/fragments', () => {
     const putResponse = await request(app)
       .put(`/v1/fragments/randomId`)
       .auth('user1@email.com', 'password1')
-      .set({
-        'Content-Type': 'application/json',
-        body: { data: 'fragment' },
-      });
+      .set('Content-Type', 'application/json')
+      .send({ data: 'fragment' });
 
     expect(putResponse.statusCode).toBe(404);
   });
@@ -47,18 +38,16 @@ describe('POST /v1/fragments', () => {
     const postResponse = await request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set({
-        'Content-Type': 'text/plain',
-        body: 'This is a fragment',
-      });
+      .set('Content-Type', 'text/plain')
+      .send('This is a fragment');
+
+    expect(postResponse.statusCode).toBe(201);
 
     const putResponse = await request(app)
       .put(`/v1/fragments/${postResponse.body.fragment.id}`)
       .auth('user1@email.com', 'password1')
-      .set({
-        'Content-Type': 'text/plain',
-        body: 'This is a updated fragment',
-      });
+      .set('Content-Type', 'text/plain')
+      .send('This is an updated fragment');
 
     expect(putResponse.statusCode).toBe(200);
   });

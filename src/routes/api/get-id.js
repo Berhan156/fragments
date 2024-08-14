@@ -1,5 +1,4 @@
 // src/routes/api/get-id.js
-
 const { createErrorResponse } = require('../../response');
 const logger = require('../../logger');
 const Fragment = require('../../model/fragment');
@@ -26,7 +25,7 @@ module.exports = async (req, res) => {
         return res.status(415).json(createErrorResponse(415, 'Extension type is not supported.'));
       }
 
-      const type = await Fragment.extValidType(ext); 
+      const type = await Fragment.extValidType(ext);
 
       if (!fragment.formats.includes(type)) {
         return res.status(415).json(createErrorResponse(415, 'Conversion is not allowed.'));

@@ -1,5 +1,3 @@
-// tests/unit/hash.test.js
-
 const hash = require('../../src/hash');
 
 describe('hash()', () => {
