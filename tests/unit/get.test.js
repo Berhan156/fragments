@@ -1,5 +1,3 @@
-// tests/unit/get.test.js
-// const { Fragment } = require('../../src/model/fragment');
 const request = require('supertest');
 
 const app = require('../../src/app');
