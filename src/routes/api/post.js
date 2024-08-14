@@ -3,7 +3,6 @@ const Fragment = require('../../model/fragment');
 const logger = require('../../logger');
 const API_URL = process.env.API_URL || 'http://localhost:8080';
 
-// Support sending various Content-Types on the body up to 5M in size
 module.exports = async (req, res) => {
   try {
     if (!Fragment.isSupportedType(req.headers['content-type'])) {
@@ -14,8 +13,6 @@ module.exports = async (req, res) => {
       ownerId: req.user,
       type: req.headers['content-type'],
       size: Buffer.byteLength(req.body),
-      created: new Date(),
-      updated: new Date(),
     });
 
     await fragment.save();
