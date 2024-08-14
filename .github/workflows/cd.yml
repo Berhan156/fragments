@@ -82,7 +82,7 @@ jobs:
             AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
             AWS_COGNITO_POOL_ID=us-east-1_XPqiBCu23
             AWS_COGNITO_CLIENT_ID=6344t5jlo1cbvk7aajk5lf4tdd
-            AWS_S3_BUCKET_NAME=(Your name)-fragments
+            AWS_S3_BUCKET_NAME=berhan.berhan-fragments
             API_URL=http://fragments-lb-354508794.us-east-1.elb.amazonaws.com
             DYNAMODB_TABLE_NAME=fragments
 
