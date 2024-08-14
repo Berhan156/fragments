@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:370491409186:task-definition/fragments-task:1",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:370491409186:task-definition/fragments-task:14",
     "containerDefinitions": [
         {
             "name": "fragments-container",
@@ -27,7 +27,7 @@
                 },
                 {
                     "name": "AWS_COGNITO_CLIENT_ID",
-                    "value": "us-east-1_XPqiBCu23"
+                    "value": "6344t5jlo1cbvk7aajk5lf4tdd"
                 },
                 {
                     "name": "LOG_LEVEL",
@@ -41,7 +41,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/",
+                    "awslogs-group": "/ecs/fragments-task",
                     "awslogs-create-group": "true",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
@@ -55,7 +55,7 @@
     "taskRoleArn": "arn:aws:iam::370491409186:role/LabRole",
     "executionRoleArn": "arn:aws:iam::370491409186:role/LabRole",
     "networkMode": "awsvpc",
-    "revision": 1,
+    "revision": 14,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -90,7 +90,6 @@
         "FARGATE"
     ],
     "requiresCompatibilities": [
-        "EC2",
         "FARGATE"
     ],
     "cpu": "256",
@@ -99,7 +98,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-08-13T02:12:39.385Z",
+    "registeredAt": "2024-08-14T20:48:37.784Z",
     "registeredBy": "arn:aws:sts::370491409186:assumed-role/voclabs/user3284141=bberhan1@myseneca.ca",
     "tags": []
 }
